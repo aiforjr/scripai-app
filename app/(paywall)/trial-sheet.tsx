@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { PlanRow } from '@/src/components/paywall/PlanRow';
 import { Button } from '@/src/components/ui/Button';
+import * as haptics from '@/src/lib/haptics';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radii, shadows, spacing, typography } from '@/src/theme/theme';
@@ -56,6 +57,8 @@ export default function TrialSheet() {
     // already cleared by then (finish-account calls `reset()`), so the missing
     // session is the only signal left to test.
     if (!user) {
+      // Same user-visible outcome as the real path, so it reads the same.
+      haptics.success();
       router.replace('/(tabs)/home');
       return;
     }
@@ -68,10 +71,14 @@ export default function TrialSheet() {
 
     if (updateError) {
       setSubmitting(false);
+      haptics.error();
       setError('Something went wrong starting your trial. Please try again.');
       return;
     }
 
+    // The `Button` already fired `heavy()` on the press; this lands when the
+    // trial is actually on.
+    haptics.success();
     await refreshProfile();
     router.replace('/(tabs)/home');
   }
@@ -82,7 +89,14 @@ export default function TrialSheet() {
   // full-screen push, where the navigator would supply no card at all.
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <Pressable onPress={() => router.back()} hitSlop={8} style={styles.closeButton}>
+      <Pressable
+        onPress={() => {
+          haptics.tap();
+          router.back();
+        }}
+        hitSlop={8}
+        style={styles.closeButton}
+      >
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
           <Path
             d="M18 6 6 18M6 6l12 12"

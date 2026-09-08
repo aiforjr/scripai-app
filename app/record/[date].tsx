@@ -29,6 +29,7 @@ import {
 } from '@/src/components/recording/Teleprompter';
 import { CheckIcon, ChevronLeft } from '@/src/components/ui/icons';
 import { useTodayScript } from '@/src/hooks/useTodayScript';
+import * as haptics from '@/src/lib/haptics';
 import { supabase } from '@/src/lib/supabase';
 import { RECORDING_DURATION_MS } from '@/src/lib/recording';
 import { RECORDINGS_BUCKET, recordingStoragePath } from '@/src/lib/storage-paths';
@@ -83,6 +84,10 @@ export default function RecordScreen() {
       const ms = Date.now() - start;
       setElapsedMs(ms);
       if (ms >= RECORDING_DURATION_MS) {
+        // Fired here rather than inside `handleStop`: the manual path already
+        // buzzes in `handleRecordPress`, and `handleStop` is shared between the
+        // two, so putting it there would double-fire on a manual stop.
+        haptics.heavy();
         void handleStop();
       }
     }, 100);
@@ -91,6 +96,12 @@ export default function RecordScreen() {
   }, [isRecording]);
 
   async function handleRecordPress() {
+    // NOTE: on iOS the Taptic Engine is disabled while an AVCaptureSession runs,
+    // so every haptic on this screen may silently do nothing on device while the
+    // preview is live. That's OS policy, not a broken call — the wrapper already
+    // swallows it, and it still fires on Android and wherever the engine is
+    // available. Don't "fix" this by reaching for Vibration.vibrate().
+    haptics.heavy();
     if (!isRecording) {
       setElapsedMs(0);
       cameraRef.current?.startRecording();
@@ -167,6 +178,11 @@ export default function RecordScreen() {
           'The iOS Simulator has no camera hardware, so video recording only works on a physical device. Everything else here is testable in the simulator.',
         );
       } else {
+        // Fires after the capture session has stopped, so unlike the record
+        // impact above this one genuinely lands on iOS. No haptic on the
+        // simulator branch — that's an expected dev condition, not a failure
+        // the user caused.
+        haptics.error();
         console.error('Recording upload failed', err);
         Alert.alert(
           'Recording failed',
@@ -176,6 +192,16 @@ export default function RecordScreen() {
     } finally {
       setUploading(false);
     }
+  }
+
+  // Clamped, and silent at the rails: `Math.max`/`Math.min` mean a press at 0%
+  // or 100% still registers but changes nothing, so firing unconditionally would
+  // tick forever against the stop. Mirrors `nudgeZoom` in settings/teleprompter.
+  function nudgeZoom(delta: number) {
+    const next = Math.min(1, Math.max(0, zoom + delta));
+    if (next === zoom) return;
+    haptics.select();
+    setZoom(next);
   }
 
   async function handleRegenerate(topicTitle?: string) {
@@ -222,9 +248,10 @@ export default function RecordScreen() {
           <View style={styles.topRow} pointerEvents="box-none">
             <View style={styles.timerGroup}>
               <Pressable
-                onPress={() =>
-                  router.canGoBack() ? router.back() : router.replace('/(tabs)/home')
-                }
+                onPress={() => {
+                  haptics.tap();
+                  router.canGoBack() ? router.back() : router.replace('/(tabs)/home');
+                }}
                 style={styles.homeButton}
               >
                 <ChevronLeft size={18} color={colors.white} />
@@ -238,7 +265,11 @@ export default function RecordScreen() {
               {SPEEDS.map((s) => (
                 <Pressable
                   key={s}
-                  onPress={() => setSpeed(s)}
+                  onPress={() => {
+                    if (speed === s) return; // re-tapping the active pill isn't a change
+                    haptics.select();
+                    setSpeed(s);
+                  }}
                   style={[styles.segment, speed === s && styles.segmentActive]}
                 >
                   <Text style={[styles.segmentText, speed === s && styles.segmentTextActive]}>
@@ -251,7 +282,11 @@ export default function RecordScreen() {
               {SIZES.map((s) => (
                 <Pressable
                   key={s}
-                  onPress={() => setTextSize(s)}
+                  onPress={() => {
+                    if (textSize === s) return;
+                    haptics.select();
+                    setTextSize(s);
+                  }}
                   style={[styles.segment, textSize === s && styles.segmentActive]}
                 >
                   <Text style={[styles.segmentText, textSize === s && styles.segmentTextActive]}>
@@ -264,26 +299,32 @@ export default function RecordScreen() {
 
           <View style={styles.zoomRow} pointerEvents="box-none">
             <View style={styles.zoomControls}>
-              <Pressable
-                onPress={() => setZoom((z) => Math.max(0, z - 0.1))}
-                style={styles.zoomBtn}
-              >
+              <Pressable onPress={() => nudgeZoom(-0.1)} style={styles.zoomBtn}>
                 <Text style={styles.zoomBtnText}>−</Text>
               </Pressable>
               <Text style={styles.zoomLabel}>{Math.round(zoom * 100)}%</Text>
-              <Pressable
-                onPress={() => setZoom((z) => Math.min(1, z + 0.1))}
-                style={styles.zoomBtn}
-              >
+              <Pressable onPress={() => nudgeZoom(0.1)} style={styles.zoomBtn}>
                 <Text style={styles.zoomBtnText}>+</Text>
               </Pressable>
             </View>
             <View style={styles.scriptActions}>
-              <Pressable onPress={() => setEditing(true)} style={styles.newScriptBtn}>
+              <Pressable
+                onPress={() => {
+                  haptics.tap();
+                  setEditing(true);
+                }}
+                style={styles.newScriptBtn}
+              >
                 <Text style={styles.newScriptText}>Edit</Text>
               </Pressable>
+              {/* The haptic sits on the press, not in `handleRegenerate`: the edit
+                  modal calls that same function and fires its own feedback, so a
+                  haptic inside it would double up on that path. */}
               <Pressable
-                onPress={() => handleRegenerate()}
+                onPress={() => {
+                  haptics.heavy();
+                  handleRegenerate();
+                }}
                 style={[styles.newScriptBtn, scriptError && styles.newScriptBtnError]}
                 disabled={scriptLoading}
               >
@@ -312,7 +353,10 @@ export default function RecordScreen() {
                 it distinguishes an expired session from a service outage. */}
             <Text style={styles.errorDetail}>{scriptError}</Text>
             <Pressable
-              onPress={() => handleRegenerate()}
+              onPress={() => {
+                haptics.heavy();
+                handleRegenerate();
+              }}
               style={styles.retryScriptBtn}
               disabled={scriptLoading}
             >

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { CheckIcon, ChevronRight } from '@/src/components/ui/icons';
+import * as haptics from '@/src/lib/haptics';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 
 /**
@@ -108,9 +109,14 @@ export function FieldGroupRow({
 
   if (!onPress) return <View style={styles.row}>{body}</View>;
 
+  function handlePress() {
+    haptics.select();
+    onPress?.();
+  }
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       accessibilityRole="button"
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >

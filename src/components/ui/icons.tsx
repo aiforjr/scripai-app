@@ -200,6 +200,35 @@ export function BellIcon({
 }
 
 /**
+ * Handset with vibration waves — the "Haptics" toggle (settings 1ma).
+ *
+ * Lucide's `Vibrate`: a phone body flanked by two short waves on each side. The
+ * waves are what carry the meaning at 16px, so they keep the same stroke weight
+ * as the body rather than being drawn lighter.
+ */
+export function VibrateIcon({
+  size = 18,
+  color = '#ec3013',
+  strokeWidth = 2,
+}: {
+  size?: number;
+  color?: string;
+  strokeWidth?: number;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="m2 8 2 2-2 2 2 2-2 2M22 8l-2 2 2 2-2 2 2 2M8 8v8a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/**
  * Handset — the "AI call" reminder channel (settings 1ma/1md).
  *
  * Lucide's plain `Phone` rather than `PhoneCall`: the design's glyph is a single

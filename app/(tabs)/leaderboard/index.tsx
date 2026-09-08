@@ -15,6 +15,7 @@ import {
   PODIUM,
   type RivalRow,
 } from '@/src/lib/placeholder-rivals';
+import * as haptics from '@/src/lib/haptics';
 import { formatDuration } from '@/src/lib/recording';
 import { STREAK_TO_UNLOCK, numberWord } from '@/src/lib/streaks';
 import { supabase } from '@/src/lib/supabase';
@@ -196,7 +197,11 @@ export default function LeaderboardIndex() {
           {SEGMENTS.map(({ key, label }) => (
             <Pressable
               key={key}
-              onPress={() => setSegment(key)}
+              onPress={() => {
+                if (segment === key) return; // already-active pill isn't a change
+                haptics.select();
+                setSegment(key);
+              }}
               style={[styles.segmentPill, segment === key && styles.segmentPillActive]}
             >
               <Text style={[styles.segmentLabel, segment === key && styles.segmentLabelActive]}>
@@ -253,8 +258,15 @@ export default function LeaderboardIndex() {
             {window.map((entry, i) => (
               <Pressable
                 key={entry.key}
+                // Only your own row is tappable, so only it gives feedback —
+                // another user's row has no handler and stays silent.
                 onPress={
-                  entry.isYou ? () => router.push('/(tabs)/leaderboard/standing') : undefined
+                  entry.isYou
+                    ? () => {
+                        haptics.select();
+                        router.push('/(tabs)/leaderboard/standing');
+                      }
+                    : undefined
                 }
                 style={[
                   styles.row,

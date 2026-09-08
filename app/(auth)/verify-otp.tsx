@@ -8,6 +8,7 @@ import { StatusChip } from '@/src/components/auth/StatusChip';
 import { Button } from '@/src/components/ui/Button';
 import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { StepHeader } from '@/src/components/ui/StepHeader';
+import * as haptics from '@/src/lib/haptics';
 import { PROVIDER_LABEL } from '@/src/lib/oauth-mock';
 import { formatE164ForDisplay } from '@/src/lib/phone';
 import { isMockOtp, isMockPhone, signInToMockAccount } from '@/src/lib/phone-mock';
@@ -80,6 +81,7 @@ export default function VerifyOtp() {
       // still burns an attempt, so the error states stay demoable.
       if (!isMockOtp(codeToVerify)) {
         setVerifying(false);
+        haptics.error();
         setOtpError(true);
         setAttemptsLeft((prev) => Math.max(0, prev - 1));
         return;
@@ -93,6 +95,7 @@ export default function VerifyOtp() {
           await signInToMockAccount();
         } catch (e) {
           setVerifying(false);
+          haptics.error();
           setOtpError(true);
           setDemoError(e instanceof Error ? e.message : 'Demo sign-in failed.');
           return;
@@ -115,6 +118,7 @@ export default function VerifyOtp() {
     setVerifying(false);
 
     if (error) {
+      haptics.error();
       setOtpError(true);
       setAttemptsLeft((prev) => Math.max(0, prev - 1));
       return;
@@ -124,6 +128,11 @@ export default function VerifyOtp() {
   }
 
   async function finishVerification() {
+    // Fired here, not in the 6-digit auto-submit effect: that effect re-runs on
+    // every keystroke and would buzz per digit. `submittedCodeRef` already keeps
+    // the verify itself from re-entering.
+    haptics.success();
+
     if (isSettingsChange) {
       // Already a full account — the number is simply confirmed and the user drops
       // back to the settings screen they started from. For a real number the
@@ -164,6 +173,7 @@ export default function VerifyOtp() {
 
   async function handleResend() {
     if (secondsLeft > 0 || resending) return;
+    haptics.tap();
     setResending(true);
     // Mirrors `handleVerify`'s split. The demo number is skipped entirely — there is
     // nothing to re-send, so this just restarts the timer — and re-issuing a
@@ -206,7 +216,13 @@ export default function VerifyOtp() {
               resend affordance own that space, and the spec shows no "Wrong number?"
               row there. */}
           {otpError ? null : (
-            <Pressable onPress={() => router.back()} hitSlop={8}>
+            <Pressable
+              onPress={() => {
+                haptics.tap();
+                router.back();
+              }}
+              hitSlop={8}
+            >
               <Text style={styles.wrongNumberLink}>Wrong number?</Text>
             </Pressable>
           )}

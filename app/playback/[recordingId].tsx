@@ -8,6 +8,7 @@ import { X } from 'lucide-react-native';
 
 import { useRecordingSignedUrl } from '@/src/hooks/useRecordingSignedUrl';
 import { formatShort } from '@/src/lib/dates';
+import * as haptics from '@/src/lib/haptics';
 import { supabase } from '@/src/lib/supabase';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 import type { Recording } from '@/src/types/database.types';
@@ -65,7 +66,14 @@ export default function PlaybackScreen() {
           <Text style={styles.title}>Your recording</Text>
           {recording ? <Text style={styles.subtitle}>{formatShort(recording.day)}</Text> : null}
         </View>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.closeButton}>
+        <Pressable
+          onPress={() => {
+            haptics.tap();
+            router.back();
+          }}
+          hitSlop={10}
+          style={styles.closeButton}
+        >
           <X size={18} strokeWidth={2.4} color={colors.text} />
         </Pressable>
       </View>

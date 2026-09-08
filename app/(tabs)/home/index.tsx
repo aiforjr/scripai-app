@@ -10,6 +10,7 @@ import { useMonthCompletions } from '@/src/hooks/useMonthCompletions';
 import { useRecordingForDay } from '@/src/hooks/useRecordingForDay';
 import { useTodayScript } from '@/src/hooks/useTodayScript';
 import { dayKey, formatShort } from '@/src/lib/dates';
+import * as haptics from '@/src/lib/haptics';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radii, shadows, spacing, typography } from '@/src/theme/theme';
 
@@ -38,7 +39,10 @@ export default function Home() {
           // The streak is a drill-down into the stats screen, which breaks down
           // the same number into lifetime days / current / best streak.
           <Pressable
-            onPress={() => router.push('/(tabs)/leaderboard/standing')}
+            onPress={() => {
+              haptics.select();
+              router.push('/(tabs)/leaderboard/standing');
+            }}
             hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={`${profile?.current_streak ?? 0} day streak. View your stats.`}

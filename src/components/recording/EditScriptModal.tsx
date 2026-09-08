@@ -15,6 +15,7 @@ import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatShort } from '@/src/lib/dates';
+import * as haptics from '@/src/lib/haptics';
 import { TOPIC_LABELS } from '@/src/lib/topics';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 
@@ -90,6 +91,7 @@ export function EditScriptModal({
   const animatedStyle = useAnimatedStyle(() => ({ marginBottom: -keyboardHeight.value }));
 
   function handleClose() {
+    haptics.tap();
     // Explicit dismiss before closing: unmounting a focused TextInput doesn't
     // reliably signal iOS to hide the software keyboard, which can leave it
     // stranded over the camera view underneath.
@@ -99,9 +101,13 @@ export function EditScriptModal({
 
   async function handleSave() {
     if (!canSave) return;
+    // Impact on the press, notification once the write lands — the pair reads as
+    // two events (started, finished) rather than one buzz.
+    haptics.heavy();
     setSaving(true);
     try {
       await onSave(draft);
+      haptics.success();
       Keyboard.dismiss();
     } finally {
       setSaving(false);
@@ -119,11 +125,13 @@ export function EditScriptModal({
   }
 
   function handleClear() {
+    haptics.tap();
     setDraft('');
     inputRef.current?.focus();
   }
 
   async function handleRegenerate(topic?: string) {
+    haptics.select();
     Keyboard.dismiss();
     await onRegenerate(topic);
   }

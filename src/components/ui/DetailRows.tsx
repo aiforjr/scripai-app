@@ -2,6 +2,7 @@ import { Children, Fragment, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { ChevronRight } from '@/src/components/ui/icons';
+import * as haptics from '@/src/lib/haptics';
 import { colors, radii, shadows, spacing, typography } from '@/src/theme/theme';
 
 /**
@@ -60,9 +61,14 @@ export function DetailRow({ label, children, value, onPress, accessory, muted }:
 
   if (!onPress) return <View style={styles.row}>{body}</View>;
 
+  function handlePress() {
+    haptics.select();
+    onPress?.();
+  }
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
       {body}

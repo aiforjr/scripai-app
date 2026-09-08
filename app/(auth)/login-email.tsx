@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/src/components/ui/Button';
 import { StepHeader } from '@/src/components/ui/StepHeader';
 import { TextField } from '@/src/components/ui/TextField';
+import * as haptics from '@/src/lib/haptics';
 import { supabase } from '@/src/lib/supabase';
 import { isValidEmail } from '@/src/lib/validation';
 import { useOnboardingDraft } from '@/src/providers/OnboardingDraftProvider';
@@ -29,6 +30,7 @@ export default function LoginEmail() {
   const canSubmit = isValidEmail(email) && password.length >= 6 && !loading;
 
   function toggleMode() {
+    haptics.tap();
     setMode((prev) => (prev === 'signin' ? 'signup' : 'signin'));
     setError(null);
   }

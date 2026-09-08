@@ -18,6 +18,7 @@ import {
   type OAuthIdentity,
   type OAuthProvider,
 } from '@/src/lib/oauth-mock';
+import * as haptics from '@/src/lib/haptics';
 import { formatE164ForDisplay } from '@/src/lib/phone';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -203,7 +204,10 @@ export default function FinishAccount() {
                 on this screen, so the linked account uses the same signal. */}
             <DetailRows>
               <Pressable
-                onPress={() => setSheetProvider(identity.provider)}
+                onPress={() => {
+                  haptics.tap();
+                  setSheetProvider(identity.provider);
+                }}
                 style={({ pressed }) => pressed && styles.rowPressed}
               >
                 <DetailIconRow
@@ -231,7 +235,13 @@ export default function FinishAccount() {
             <Text style={styles.finePrint}>
               Email came from your {PROVIDER_EMAIL_SOURCE[identity.provider]}, so it always matches
               a verified account.{' '}
-              <Text style={styles.finePrintLink} onPress={() => setSheetProvider(otherProvider)}>
+              <Text
+                style={styles.finePrintLink}
+                onPress={() => {
+                  haptics.tap();
+                  setSheetProvider(otherProvider);
+                }}
+              >
                 Use {PROVIDER_LABEL[otherProvider]} instead
               </Text>
               .

@@ -48,6 +48,8 @@ There is no data-fetching library. Screens and hooks call `supabase-js` directly
 - **`EntitlementsProvider`** ([src/providers/EntitlementsProvider.tsx](src/providers/EntitlementsProvider.tsx)) — a deliberate stub over `profiles.is_premium`, shaped so the real RevenueCat SDK can replace its internals without touching any consumer screen. Read premium state via `useEntitlements()`, never `profile.is_premium` directly.
 - **`OnboardingDraftProvider`** ([src/providers/OnboardingDraftProvider.tsx](src/providers/OnboardingDraftProvider.tsx)) — the onboarding quiz runs _before_ an account exists, so answers are held in memory and flushed to `profiles` in one `commit(userId)` call from the auth screens right after signup. That commit is what sets `onboarding_complete`, which is what un-gates the tabs.
 
+One setting deliberately breaks the "every setting is a `profiles` column" pattern: `haptics_enabled` is **device-local AsyncStorage** ([src/lib/haptics-preference.ts](src/lib/haptics-preference.ts)), because haptics describe this handset's hardware, the toggle must respond with no network round-trip, and it must work before a session exists. It therefore does not follow the user to a new device — a fresh install starts at the `true` default.
+
 Session persistence uses a custom `SecureStore` adapter that **chunks values across multiple keys** because SecureStore has a ~2048-byte limit and Supabase sessions exceed it; web falls back to `AsyncStorage`. Don't simplify this back to a plain SecureStore adapter.
 
 ### Database
@@ -85,11 +87,22 @@ Tokens were transcribed from the imported Claude Design system in [_design_impor
 
 Font is Archivo (400/600/800). Primary buttons are solid `colors.accent.DEFAULT` (`#ec3013`) with a glow shadow — use `shadows.button`.
 
+## Haptics
+
+Never call `expo-haptics` directly — always go through [src/lib/haptics.ts](src/lib/haptics.ts), which is a no-op on web, never throws, and honours the user's Settings toggle inside its own `fire()` helper.
+
+It exports **two vocabularies, deliberately**: `select`/`tap`/`heavy` name a _weight_ and belong on presses; `success`/`warning`/`error` name an _outcome_ and belong on the moment a task resolves, not on the press that started it. A press that kicks off async work gets both — the impact on touch, the notification when it lands. Two impacts on one touch is a bug.
+
+Shared primitives (`Button`, `Chip`, `RadioOption`, `ToggleRow`, `PlanRow`, `DetailRow`, `FieldCard`, `FieldGroupRow`, the tab bar) already fire, so most screens inherit feedback; a bare `Pressable` in a screen adds a local `handlePress` rather than reaching for a wrapper component. Guard segmented controls and steppers so a press that changes nothing stays silent, and never fire from a re-runnable `useEffect`.
+
+On iOS the Taptic Engine is disabled while an `AVCaptureSession` runs, so haptics on the record screen may silently do nothing on device while the preview is live. That is OS policy — the calls are wired anyway and are harmless no-ops. See [doc/haptic-plan.md](doc/haptic-plan.md).
+
 ## Reference docs
 
 - [_design_import/screens-spec.md](_design_import/screens-spec.md) — screen-by-screen spec (exact copy, states, dynamic fields) for all 48 designed screens. This is the source of truth for UI copy; there is no visual diffing, so changes are verified by a manual pass against it.
 - [doc/wobbly-churning-snowglobe.md](doc/wobbly-churning-snowglobe.md) — the original build plan: decisions and their rationale. Note it predates the code in places (it says SDK 51 and `expo-av`; the app is on SDK 57 and `expo-video`).
 - [doc/home-screen-spec.md](doc/home-screen-spec.md) — home screen detail spec.
+- [doc/haptic-plan.md](doc/haptic-plan.md) — haptics coverage plan: the two-vocabulary rule, the device-local toggle, iOS camera suppression, and the manual device verification passes.
 
 ## Known stubs
 

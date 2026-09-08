@@ -10,6 +10,7 @@ import { SocialAuthButtons } from '@/src/components/auth/SocialAuthButtons';
 import { Button } from '@/src/components/ui/Button';
 import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { StepHeader } from '@/src/components/ui/StepHeader';
+import * as haptics from '@/src/lib/haptics';
 import { detectDefaultCountry, isValidNationalNumber, toE164 } from '@/src/lib/phone';
 import { supabase } from '@/src/lib/supabase';
 import { colors, spacing, typography } from '@/src/theme/theme';
@@ -82,7 +83,10 @@ export default function Login() {
 
         <Pressable
           style={styles.emailLink}
-          onPress={() => router.push('/(auth)/login-email')}
+          onPress={() => {
+            haptics.tap();
+            router.push('/(auth)/login-email');
+          }}
           hitSlop={8}
         >
           <Text style={styles.emailLinkText}>Continue with email instead</Text>

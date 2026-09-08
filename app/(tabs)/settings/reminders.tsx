@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { BellIcon, PhoneCallIcon, RadioCircle } from '@/src/components/ui/icons';
 import { ScreenHeader } from '@/src/components/ui/ScreenHeader';
 import { ToggleRow } from '@/src/components/ui/ToggleRow';
+import * as haptics from '@/src/lib/haptics';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radii, shadows, spacing, typography } from '@/src/theme/theme';
@@ -77,7 +78,11 @@ export default function Reminders() {
             return (
               <Pressable
                 key={slot}
-                onPress={() => notificationsEnabled && updateProfile({ reminder_time: slot })}
+                onPress={() => {
+                  if (!notificationsEnabled || selected) return;
+                  haptics.select();
+                  updateProfile({ reminder_time: slot });
+                }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected, disabled: !notificationsEnabled }}
                 style={[styles.timeRow, i === TIME_SLOTS.length - 1 && styles.timeRowLast]}
@@ -100,7 +105,11 @@ export default function Reminders() {
                 return (
                   <Pressable
                     key={i}
-                    onPress={() => toggleDay(i)}
+                    onPress={() => {
+                      // No change-guard needed: a toggle always flips.
+                      haptics.select();
+                      toggleDay(i);
+                    }}
                     style={[styles.dayCircle, selected && styles.dayCircleActive]}
                   >
                     <Text style={[styles.dayLabel, selected && styles.dayLabelActive]}>

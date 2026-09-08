@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { RecordingThumb } from '@/src/components/calendar/RecordingThumb';
 import { ChevronLeft, ChevronRight, VideoIcon } from '@/src/components/ui/icons';
 import { buildMonthGrid, formatMonthYear } from '@/src/lib/dates';
+import * as haptics from '@/src/lib/haptics';
 import type { DayState } from '@/src/hooks/useMonthCompletions';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 
@@ -32,10 +33,24 @@ export function MonthCalendar({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{formatMonthYear(year, month0)}</Text>
         <View style={styles.navGroup}>
-          <Pressable onPress={onPrevMonth} hitSlop={8} style={styles.navButton}>
+          <Pressable
+            onPress={() => {
+              haptics.select();
+              onPrevMonth();
+            }}
+            hitSlop={8}
+            style={styles.navButton}
+          >
             <ChevronLeft size={16} color={colors.neutral[700]} />
           </Pressable>
-          <Pressable onPress={onNextMonth} hitSlop={8} style={styles.navButton}>
+          <Pressable
+            onPress={() => {
+              haptics.select();
+              onNextMonth();
+            }}
+            hitSlop={8}
+            style={styles.navButton}
+          >
             <ChevronRight size={16} color={colors.neutral[700]} />
           </Pressable>
         </View>
@@ -65,7 +80,13 @@ export function MonthCalendar({
           return (
             <Pressable
               key={cell.key}
-              onPress={() => cell.inMonth && onSelectDay?.(cell.key)}
+              // Inside the `inMonth` guard, so a greyed leading/trailing cell
+              // stays silent rather than ticking for a press that does nothing.
+              onPress={() => {
+                if (!cell.inMonth) return;
+                haptics.select();
+                onSelectDay?.(cell.key);
+              }}
               style={styles.cell}
             >
               <View

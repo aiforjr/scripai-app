@@ -11,6 +11,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import * as haptics from '@/src/lib/haptics';
+import { loadHapticsEnabled } from '@/src/lib/haptics-preference';
 import { AuthProvider } from '@/src/providers/AuthProvider';
 import { EntitlementsProvider } from '@/src/providers/EntitlementsProvider';
 import { OnboardingDraftProvider } from '@/src/providers/OnboardingDraftProvider';
@@ -31,6 +33,15 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsLoaded, fontError]);
+
+  // Hydrate the device-local haptics preference into the wrapper's module-level
+  // gate. Deliberately does not block rendering: the flag defaults to `true`, so
+  // the only risk is one tap in the first few milliseconds feeling enabled when
+  // the user had disabled it — a better trade than holding the splash on a
+  // preference read.
+  useEffect(() => {
+    loadHapticsEnabled().then(haptics.setEnabled);
+  }, []);
 
   if (!fontsLoaded && !fontError) {
     return null;

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { CountryCode } from 'libphonenumber-js';
 
 import { getAllCountryOptions, type CountryOption } from '@/src/lib/countries';
+import * as haptics from '@/src/lib/haptics';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 
 interface CountryPickerModalProps {
@@ -31,6 +32,7 @@ export function CountryPickerModal({ visible, onClose, onSelect }: CountryPicker
   }, [allCountries, query]);
 
   function handleSelect(country: CountryOption) {
+    haptics.select();
     onSelect(country.cca2);
     setQuery('');
     onClose();
@@ -42,7 +44,14 @@ export function CountryPickerModal({ visible, onClose, onSelect }: CountryPicker
         <SafeAreaView style={styles.sheet} edges={['top', 'bottom']}>
           <View style={styles.header}>
             <Text style={styles.title}>Select country</Text>
-            <Pressable onPress={onClose} hitSlop={8} style={styles.closeButton}>
+            <Pressable
+              onPress={() => {
+                haptics.tap();
+                onClose();
+              }}
+              hitSlop={8}
+              style={styles.closeButton}
+            >
               <Text style={styles.closeButtonText}>✕</Text>
             </Pressable>
           </View>

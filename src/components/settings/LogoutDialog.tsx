@@ -1,6 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/src/components/ui/Button';
+import * as haptics from '@/src/lib/haptics';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 
 interface LogoutDialogProps {
@@ -15,10 +16,17 @@ interface LogoutDialogProps {
  * "Stay logged in" text link match the design instead of OS alert styling.
  */
 export function LogoutDialog({ visible, onConfirm, onCancel }: LogoutDialogProps) {
+  function handleCancel() {
+    haptics.tap();
+    onCancel();
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       {/* Tapping the scrim dismisses, matching the design's non-destructive default. */}
-      <Pressable style={styles.scrim} onPress={onCancel}>
+      <Pressable style={styles.scrim} onPress={handleCancel}>
+        {/* Deliberately no haptic: this handler exists only to stop a tap on the
+            card body from reaching the scrim, so it is not an affordance. */}
         <Pressable style={styles.card} onPress={() => {}}>
           {/* Title and body are one group with tight spacing; the actions sit in
               their own group further down, so the copy reads as a single block
@@ -31,7 +39,7 @@ export function LogoutDialog({ visible, onConfirm, onCancel }: LogoutDialogProps
           <View style={styles.actions}>
             <Button title="Log out" variant="primary" onPress={onConfirm} />
 
-            <Pressable onPress={onCancel} hitSlop={8} style={styles.stayButton}>
+            <Pressable onPress={handleCancel} hitSlop={8} style={styles.stayButton}>
               <Text style={styles.stayLabel}>Stay logged in</Text>
             </Pressable>
           </View>

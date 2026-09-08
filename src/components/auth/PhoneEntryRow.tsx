@@ -4,6 +4,7 @@ import type { CountryCode } from 'libphonenumber-js';
 
 import { CountryPickerModal } from '@/src/components/auth/CountryPickerModal';
 import { findCountryOption, flagEmoji } from '@/src/lib/countries';
+import * as haptics from '@/src/lib/haptics';
 import { formatNationalInput } from '@/src/lib/phone';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 
@@ -42,7 +43,10 @@ export function PhoneEntryRow({
     <View style={[styles.row, onSurface && styles.rowOnSurface]}>
       <Pressable
         style={[styles.countryPill, onSurface && styles.countryPillOnSurface]}
-        onPress={() => setPickerVisible(true)}
+        onPress={() => {
+          haptics.select();
+          setPickerVisible(true);
+        }}
         hitSlop={8}
       >
         <Text style={styles.countryText}>

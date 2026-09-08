@@ -37,6 +37,9 @@ function GoogleGlyph({ size = 18 }: { size?: number }) {
 }
 
 function showComingSoon() {
+  // The action was refused but recoverable (use phone or email instead), which is
+  // what `warning` names — paired with the `tap` on the press itself.
+  haptics.warning();
   Alert.alert('Coming soon', "Apple/Google sign-in isn't set up yet — use phone or email instead.");
 }
 

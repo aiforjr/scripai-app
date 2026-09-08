@@ -8,6 +8,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { OnboardingBadge } from '@/src/components/ui/OnboardingBadge';
 import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { StepHeader } from '@/src/components/ui/StepHeader';
+import * as haptics from '@/src/lib/haptics';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, spacing, typography } from '@/src/theme/theme';
 
@@ -41,6 +42,10 @@ export default function Commit() {
   const { profile } = useAuth();
   const [holdProgress, setHoldProgress] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Guards the completion haptic to one firing per hold. The threshold is only
+  // ever crossed inside the interval below, but a `setState` updater can be
+  // invoked more than once for the same tick, so the fire can't live in there.
+  const completedRef = useRef(false);
 
   function clearHoldInterval() {
     if (intervalRef.current) {
@@ -51,6 +56,11 @@ export default function Commit() {
 
   function handlePressIn() {
     clearHoldInterval();
+    completedRef.current = false;
+    // Impact on touch-down, `success()` when the ring closes — the two ends of
+    // the ritual. The 1.5s between them is what makes the hold feel deliberate
+    // rather than like one long buzz.
+    haptics.heavy();
     const step = TICK_MS / HOLD_DURATION_MS;
     intervalRef.current = setInterval(() => {
       setHoldProgress((prev) => {
@@ -66,6 +76,10 @@ export default function Commit() {
 
   function handlePressOut() {
     clearHoldInterval();
+    // Read outside the updater: an updater can run more than once for a tick,
+    // which would double-fire. `completedRef` is the authority on whether the
+    // hold finished — a completed hold keeps its progress and its `success()`.
+    if (!completedRef.current) haptics.warning();
     setHoldProgress((prev) => (prev >= 1 ? prev : 0));
   }
 
@@ -77,6 +91,10 @@ export default function Commit() {
   // state update that completes the hold.
   useEffect(() => {
     if (holdProgress >= 1) {
+      if (!completedRef.current) {
+        completedRef.current = true;
+        haptics.success();
+      }
       router.replace('/(paywall)/trial-offer');
     }
   }, [holdProgress, router]);

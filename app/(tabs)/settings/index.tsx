@@ -14,9 +14,11 @@ import { ProfileStatsCard } from '@/src/components/profile/ProfileStatsCard';
 import { BadgesRow } from '@/src/components/settings/BadgesRow';
 import { LogoutDialog } from '@/src/components/settings/LogoutDialog';
 import { Card } from '@/src/components/ui/Card';
-import { BellIcon, ChevronRight, PhoneCallIcon } from '@/src/components/ui/icons';
+import { BellIcon, ChevronRight, PhoneCallIcon, VibrateIcon } from '@/src/components/ui/icons';
 import { ScreenHeader } from '@/src/components/ui/ScreenHeader';
 import { ToggleRow } from '@/src/components/ui/ToggleRow';
+import * as haptics from '@/src/lib/haptics';
+import { loadHapticsEnabled, setHapticsEnabled } from '@/src/lib/haptics-preference';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
@@ -36,6 +38,18 @@ export default function SettingsIndex() {
   const { profile, user, refreshProfile, signOut } = useAuth();
   const [rankInfo, setRankInfo] = useState<{ rank: number; total: number } | null>(null);
   const [logoutVisible, setLogoutVisible] = useState(false);
+  // Local state rather than `profile?.…`: there is no column backing this one.
+  const [hapticsOn, setHapticsOn] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    loadHapticsEnabled().then((v) => {
+      if (mounted) setHapticsOn(v);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -67,6 +81,15 @@ export default function SettingsIndex() {
     await refreshProfile();
   };
 
+  // No haptic of its own: `ToggleRow` already fires `select()` internally, which
+  // gives the right behaviour both ways — switching off, the tick runs before the
+  // gate closes, so the user feels one last confirmation of the thing they just
+  // silenced; switching on, the gate is already open so it ticks to confirm.
+  const handleHapticsToggle = (v: boolean) => {
+    setHapticsOn(v);
+    setHapticsEnabled(v);
+  };
+
   const handleLogout = async () => {
     setLogoutVisible(false);
     await signOut();
@@ -92,7 +115,10 @@ export default function SettingsIndex() {
           bestStreak={bestStreak}
           accessory={
             <Pressable
-              onPress={() => router.push('/(tabs)/settings/profile')}
+              onPress={() => {
+                haptics.select();
+                router.push('/(tabs)/settings/profile');
+              }}
               style={styles.editPill}
               hitSlop={8}
             >
@@ -123,7 +149,10 @@ export default function SettingsIndex() {
             onValueChange={(v) => updateProfile({ ai_call_enabled: v })}
           />
           <Pressable
-            onPress={() => router.push('/(tabs)/settings/reminders')}
+            onPress={() => {
+              haptics.select();
+              router.push('/(tabs)/settings/reminders');
+            }}
             style={styles.rowBetween}
           >
             <Text style={styles.rowLabel}>Time</Text>
@@ -147,7 +176,12 @@ export default function SettingsIndex() {
                 return (
                   <Pressable
                     key={option}
-                    onPress={() => updateProfile({ teleprompter_speed: option })}
+                    onPress={() => {
+                      // Guarded: re-tapping the active pill is not a selection change.
+                      if (active) return;
+                      haptics.select();
+                      updateProfile({ teleprompter_speed: option });
+                    }}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: active }}
                     style={[styles.segmentPill, active && styles.segmentPillActive]}
@@ -164,7 +198,10 @@ export default function SettingsIndex() {
           {/* Text size and zoom both live on the Teleprompter screen (1mf), which
               has the live preview that makes either choice meaningful. */}
           <Pressable
-            onPress={() => router.push('/(tabs)/settings/teleprompter')}
+            onPress={() => {
+              haptics.select();
+              router.push('/(tabs)/settings/teleprompter');
+            }}
             style={styles.rowBetween}
           >
             <Text style={styles.rowLabel}>Text size</Text>
@@ -177,7 +214,10 @@ export default function SettingsIndex() {
           </Pressable>
 
           <Pressable
-            onPress={() => router.push('/(tabs)/settings/teleprompter')}
+            onPress={() => {
+              haptics.select();
+              router.push('/(tabs)/settings/teleprompter');
+            }}
             style={styles.rowBetween}
           >
             <Text style={styles.rowLabel}>Default zoom</Text>
@@ -190,7 +230,10 @@ export default function SettingsIndex() {
           </Pressable>
 
           <Pressable
-            onPress={() => router.push('/(tabs)/settings/topic-style')}
+            onPress={() => {
+              haptics.select();
+              router.push('/(tabs)/settings/topic-style');
+            }}
             style={styles.rowBetween}
           >
             <Text style={styles.rowLabel}>Topic style</Text>
@@ -205,7 +248,25 @@ export default function SettingsIndex() {
 
         <Text style={styles.sectionTitle}>Account</Text>
         <Card style={styles.section}>
-          <Pressable onPress={() => setLogoutVisible(true)} style={styles.rowBetween}>
+          {/* NOTE: unlike every other setting in this app, this one is
+              **device-local** AsyncStorage, not a `profiles` column — haptics
+              describe this handset's hardware, the switch must respond with no
+              network round-trip, and it must work before a session exists. It
+              therefore does not follow the user to a new device. */}
+          <ToggleRow
+            icon={<VibrateIcon size={16} color={colors.accent[700]} strokeWidth={2.25} />}
+            label="Haptics"
+            subtitle="Vibration feedback on taps"
+            value={hapticsOn}
+            onValueChange={handleHapticsToggle}
+          />
+          <Pressable
+            onPress={() => {
+              haptics.tap();
+              setLogoutVisible(true);
+            }}
+            style={styles.rowBetween}
+          >
             <Text style={styles.logoutLabel}>Log out</Text>
           </Pressable>
         </Card>

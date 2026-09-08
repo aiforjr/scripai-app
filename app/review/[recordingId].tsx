@@ -11,6 +11,7 @@ import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { CheckIcon, RotateCcwIcon } from '@/src/components/ui/icons';
 import { useRecordingSignedUrl } from '@/src/hooks/useRecordingSignedUrl';
 import { addDays, dayKey, formatShort, parseDayKey } from '@/src/lib/dates';
+import * as haptics from '@/src/lib/haptics';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radii, shadows, spacing, typography } from '@/src/theme/theme';
@@ -85,6 +86,7 @@ export default function ReviewScreen() {
   }, [phase, player]);
 
   function togglePlay() {
+    haptics.tap();
     if (player.playing) {
       player.pause();
     } else {
@@ -108,9 +110,14 @@ export default function ReviewScreen() {
     player.pause();
     setHasFinishedPhase(false);
 
+    // The Button already fired `heavy()` on the press; `success()` lands here,
+    // after the phase advances. The gap between the two is what makes them read
+    // as two events rather than one buzz.
     if (phase === 'audio') {
+      haptics.success();
       setPhase('video');
     } else if (phase === 'video') {
+      haptics.success();
       setPhase('both');
     } else {
       const { data } = await supabase.rpc('fn_complete_day', {
@@ -120,6 +127,9 @@ export default function ReviewScreen() {
       });
       const streak = Array.isArray(data) ? data[0]?.current_streak : (data as any)?.current_streak;
       setCompletion({ streak: streak ?? (profile?.current_streak ?? 0) + 1 });
+      // The product's biggest beat: fired after the RPC resolves so it arrives
+      // *with* the confetti and the new streak, not on the press that started it.
+      haptics.success();
       await refreshProfile();
       setPhase('complete');
     }
@@ -161,7 +171,10 @@ export default function ReviewScreen() {
         <Text style={styles.title}>Review the video</Text>
         <Pressable
           style={styles.retryPill}
-          onPress={() => recording && router.replace(`/record/${recording.day}`)}
+          onPress={() => {
+            haptics.tap();
+            if (recording) router.replace(`/record/${recording.day}`);
+          }}
         >
           <RotateCcwIcon size={15} color={colors.text} strokeWidth={2.2} />
           <Text style={styles.retryText}>Retry</Text>
@@ -322,6 +335,10 @@ function DayCompleteOverlay({
         </View>
 
         <Button title="Done for the day" onPress={() => router.replace('/(tabs)/home')} />
+        {/* TODO: this has no `onPress` — a dead affordance that looks tappable
+            but does nothing. Deliberately left without a haptic: feedback on a
+            no-op would only make the dead end more convincing. Needs either a
+            real save-to-gallery implementation or removal. */}
         <Pressable>
           <Text style={styles.saveLink}>Save video to gallery</Text>
         </Pressable>

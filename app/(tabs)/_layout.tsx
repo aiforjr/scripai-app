@@ -31,11 +31,16 @@ function HapticTabButton({
   children?: React.ReactNode;
   onPress?: (e: any) => void;
 } & Record<string, any>) {
+  // Tapping the tab you are already on is not a selection change, so it stays
+  // silent — the same guard the segmented controls elsewhere use. The tab bar
+  // passes the focused state through `accessibilityState.selected`.
+  const isFocused = rest['accessibilityState']?.selected === true;
+
   return (
     <Pressable
       {...rest}
       onPress={(e) => {
-        haptics.select();
+        if (!isFocused) haptics.select();
         onPress?.(e);
       }}
     >

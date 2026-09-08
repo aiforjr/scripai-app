@@ -9,6 +9,7 @@ import { OnboardingBadge } from '@/src/components/ui/OnboardingBadge';
 import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { StepHeader } from '@/src/components/ui/StepHeader';
 import { ToggleRow } from '@/src/components/ui/ToggleRow';
+import * as haptics from '@/src/lib/haptics';
 import { useOnboardingDraft } from '@/src/providers/OnboardingDraftProvider';
 import { colors, radii, shadows, spacing, typography } from '@/src/theme/theme';
 
@@ -28,6 +29,7 @@ export default function Reminders() {
   const { draft, update } = useOnboardingDraft();
 
   const cycleTime = () => {
+    haptics.select();
     const currentIndex = TIME_PRESETS.indexOf(draft.reminderTime);
     const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % TIME_PRESETS.length;
     update({ reminderTime: TIME_PRESETS[nextIndex] });

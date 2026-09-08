@@ -133,21 +133,25 @@ Instead, the leverage comes from **five row primitives** that cascade to many sc
 
 Status: `— pending` → `✓ live`. Flip a cell as each ships.
 
+**All cells below are shipped.** Two corrections found during implementation, noted inline:
+the record screen has no camera-flip control (`facing` is hardcoded `front`), and review's
+"Save video to gallery" is a dead affordance left deliberately silent.
+
 ### P0 — Primitives (do first; cascades to most screens)
 
-| Surface                                | File                                                                                     | Haptic               | Status    |
-| -------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------- | --------- |
-| Wrapper: add success/warning/error     | [src/lib/haptics.ts](src/lib/haptics.ts)                                                 | —                    | — pending |
-| Wrapper: `setEnabled` gate in `fire()` | [src/lib/haptics.ts](src/lib/haptics.ts)                                                 | —                    | — pending |
-| Preference store (device-local)        | `src/lib/haptics-preference.ts` (new)                                                    | —                    | — pending |
-| Hydrate at startup                     | [app/\_layout.tsx](app/_layout.tsx)                                                      | —                    | — pending |
-| **Settings toggle (§7)**               | [app/(tabs)/settings/index.tsx](<app/(tabs)/settings/index.tsx>)                         | `select()`           | — pending |
-| Nav rows (covers most of settings)     | [src/components/ui/DetailRows.tsx](src/components/ui/DetailRows.tsx)                     | `select()`           | — pending |
-| Field card rows                        | [src/components/auth/FieldCard.tsx](src/components/auth/FieldCard.tsx)                   | `select()`           | — pending |
-| Field group rows                       | [src/components/auth/FieldGroup.tsx](src/components/auth/FieldGroup.tsx)                 | `select()`           | — pending |
-| Country-code opener                    | [src/components/auth/PhoneEntryRow.tsx](src/components/auth/PhoneEntryRow.tsx)           | `select()`           | — pending |
-| Country row / close                    | [src/components/auth/CountryPickerModal.tsx](src/components/auth/CountryPickerModal.tsx) | `select()` / `tap()` | — pending |
-| Scrim + "Stay logged in"               | [src/components/settings/LogoutDialog.tsx](src/components/settings/LogoutDialog.tsx)     | `tap()`              | — pending |
+| Surface                                | File                                                                                     | Haptic               | Status |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------- | ------ |
+| Wrapper: add success/warning/error     | [src/lib/haptics.ts](src/lib/haptics.ts)                                                 | —                    | ✓ live |
+| Wrapper: `setEnabled` gate in `fire()` | [src/lib/haptics.ts](src/lib/haptics.ts)                                                 | —                    | ✓ live |
+| Preference store (device-local)        | `src/lib/haptics-preference.ts` (new)                                                    | —                    | ✓ live |
+| Hydrate at startup                     | [app/\_layout.tsx](app/_layout.tsx)                                                      | —                    | ✓ live |
+| **Settings toggle (§7)**               | [app/(tabs)/settings/index.tsx](<app/(tabs)/settings/index.tsx>)                         | `select()`           | ✓ live |
+| Nav rows (covers most of settings)     | [src/components/ui/DetailRows.tsx](src/components/ui/DetailRows.tsx)                     | `select()`           | ✓ live |
+| Field card rows                        | [src/components/auth/FieldCard.tsx](src/components/auth/FieldCard.tsx)                   | `select()`           | ✓ live |
+| Field group rows                       | [src/components/auth/FieldGroup.tsx](src/components/auth/FieldGroup.tsx)                 | `select()`           | ✓ live |
+| Country-code opener                    | [src/components/auth/PhoneEntryRow.tsx](src/components/auth/PhoneEntryRow.tsx)           | `select()`           | ✓ live |
+| Country row / close                    | [src/components/auth/CountryPickerModal.tsx](src/components/auth/CountryPickerModal.tsx) | `select()` / `tap()` | ✓ live |
+| Scrim + "Stay logged in"               | [src/components/settings/LogoutDialog.tsx](src/components/settings/LogoutDialog.tsx)     | `tap()`              | ✓ live |
 
 `DetailRows`, `FieldCard`, and `FieldGroup` all already gate on an optional `onPress` — add
 `handlePress` in that branch only. In `LogoutDialog`, **leave the inner tap-blocker alone**;
@@ -155,21 +159,21 @@ the confirm button is a `Button` and is already covered.
 
 ### P1 — Moments (highest value; where `notificationAsync` earns its place)
 
-| Surface                                 | File                                                                                   | Haptic                  | Status    |
-| --------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------- | --------- |
-| Record start / manual stop              | [app/record/[date].tsx](app/record/[date].tsx) `handleRecordPress`                     | `heavy()`               | — pending |
-| 60s auto-stop                           | same, interval branch at `ms >= RECORDING_DURATION_MS`                                 | `heavy()`               | — pending |
-| Upload failure                          | same, `handleStop` catch (non-simulator)                                               | `error()`               | — pending |
-| Play / pause                            | [app/review/[recordingId].tsx](app/review/[recordingId].tsx) `togglePlay`              | `tap()`                 | — pending |
-| Phase advance (audio→video, video→both) | same, `handleCompletePhase`                                                            | `success()`             | — pending |
-| **Day complete + streak bump**          | same, after `setCompletion(...)` pre-`setPhase('complete')`                            | `success()`             | — pending |
-| Retake pill                             | same                                                                                   | `tap()`                 | — pending |
-| OTP verified                            | [app/(auth)/verify-otp.tsx](<app/(auth)/verify-otp.tsx>) `finishVerification`          | `success()`             | — pending |
-| OTP rejected (3 sites)                  | same, each `setOtpError(true)`                                                         | `error()`               | — pending |
-| Resend / "Wrong number?"                | same                                                                                   | `tap()`                 | — pending |
-| Trial started / failed                  | [app/(paywall)/trial-sheet.tsx](<app/(paywall)/trial-sheet.tsx>) `handleStartTrial`    | `success()` / `error()` | — pending |
-| Phone-change failure                    | [app/(tabs)/settings/change-phone.tsx](<app/(tabs)/settings/change-phone.tsx>)         | `error()`               | — pending |
-| "Coming soon" refusal                   | [src/components/auth/SocialAuthButtons.tsx](src/components/auth/SocialAuthButtons.tsx) | `warning()`             | — pending |
+| Surface                                 | File                                                                                   | Haptic                  | Status |
+| --------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------- | ------ |
+| Record start / manual stop              | [app/record/[date].tsx](app/record/[date].tsx) `handleRecordPress`                     | `heavy()`               | ✓ live |
+| 60s auto-stop                           | same, interval branch at `ms >= RECORDING_DURATION_MS`                                 | `heavy()`               | ✓ live |
+| Upload failure                          | same, `handleStop` catch (non-simulator)                                               | `error()`               | ✓ live |
+| Play / pause                            | [app/review/[recordingId].tsx](app/review/[recordingId].tsx) `togglePlay`              | `tap()`                 | ✓ live |
+| Phase advance (audio→video, video→both) | same, `handleCompletePhase`                                                            | `success()`             | ✓ live |
+| **Day complete + streak bump**          | same, after `setCompletion(...)` pre-`setPhase('complete')`                            | `success()`             | ✓ live |
+| Retake pill                             | same                                                                                   | `tap()`                 | ✓ live |
+| OTP verified                            | [app/(auth)/verify-otp.tsx](<app/(auth)/verify-otp.tsx>) `finishVerification`          | `success()`             | ✓ live |
+| OTP rejected (3 sites)                  | same, each `setOtpError(true)`                                                         | `error()`               | ✓ live |
+| Resend / "Wrong number?"                | same                                                                                   | `tap()`                 | ✓ live |
+| Trial started / failed                  | [app/(paywall)/trial-sheet.tsx](<app/(paywall)/trial-sheet.tsx>) `handleStartTrial`    | `success()` / `error()` | ✓ live |
+| Phone-change failure                    | [app/(tabs)/settings/change-phone.tsx](<app/(tabs)/settings/change-phone.tsx>)         | `error()`               | ✓ live |
+| "Coming soon" refusal                   | [src/components/auth/SocialAuthButtons.tsx](src/components/auth/SocialAuthButtons.tsx) | `warning()`             | ✓ live |
 
 Critical placement details:
 
@@ -186,19 +190,19 @@ Critical placement details:
 
 ### P2 — Long tail (mechanical, batch by file)
 
-| Surface                                             | File                                                                                                                | Haptic                                         | Status    |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | --------- |
-| Speed / size segments, flip, back, edit, regenerate | [app/record/[date].tsx](app/record/[date].tsx)                                                                      | `select()` / `tap()` / `heavy()`               | — pending |
-| Zoom −/+ (rail-guarded)                             | same                                                                                                                | `select()`                                     | — pending |
-| Cancel / Save / Clear / chips / regenerate          | [src/components/recording/EditScriptModal.tsx](src/components/recording/EditScriptModal.tsx)                        | `tap()` / `heavy()` + `success()` / `select()` | — pending |
-| 7 nav + segment Pressables                          | [app/(tabs)/settings/index.tsx](<app/(tabs)/settings/index.tsx>)                                                    | `select()` / `tap()`                           | — pending |
-| Prev/next month, day cell                           | [src/components/calendar/MonthCalendar.tsx](src/components/calendar/MonthCalendar.tsx)                              | `select()`                                     | — pending |
-| Segment pills, own-row press                        | [app/(tabs)/leaderboard/index.tsx](<app/(tabs)/leaderboard/index.tsx>)                                              | `select()`                                     | — pending |
-| Streak pill                                         | [app/(tabs)/home/index.tsx](<app/(tabs)/home/index.tsx>)                                                            | `select()`                                     | — pending |
-| Close                                               | [app/playback/[recordingId].tsx](app/playback/[recordingId].tsx)                                                    | `tap()`                                        | — pending |
-| Time slots, weekday toggles                         | [app/(tabs)/settings/reminders.tsx](<app/(tabs)/settings/reminders.tsx>)                                            | `select()`                                     | — pending |
-| `cycleTime`, login link                             | [app/(onboarding)/reminders.tsx](<app/(onboarding)/reminders.tsx>), [welcome.tsx](<app/(onboarding)/welcome.tsx>)   | `select()` / `tap()`                           | — pending |
-| Fine-print links, provider rows                     | `app/(auth)/login.tsx`, `login-email.tsx`, `finish-account.tsx`, `add-phone.tsx`, `app/(tabs)/settings/profile.tsx` | `tap()`                                        | — pending |
+| Surface                                                                | File                                                                                                                | Haptic                                         | Status |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------ |
+| Speed / size segments, back, edit, regenerate (no flip control exists) | [app/record/[date].tsx](app/record/[date].tsx)                                                                      | `select()` / `tap()` / `heavy()`               | ✓ live |
+| Zoom −/+ (rail-guarded)                                                | same                                                                                                                | `select()`                                     | ✓ live |
+| Cancel / Save / Clear / chips / regenerate                             | [src/components/recording/EditScriptModal.tsx](src/components/recording/EditScriptModal.tsx)                        | `tap()` / `heavy()` + `success()` / `select()` | ✓ live |
+| 7 nav + segment Pressables                                             | [app/(tabs)/settings/index.tsx](<app/(tabs)/settings/index.tsx>)                                                    | `select()` / `tap()`                           | ✓ live |
+| Prev/next month, day cell                                              | [src/components/calendar/MonthCalendar.tsx](src/components/calendar/MonthCalendar.tsx)                              | `select()`                                     | ✓ live |
+| Segment pills, own-row press                                           | [app/(tabs)/leaderboard/index.tsx](<app/(tabs)/leaderboard/index.tsx>)                                              | `select()`                                     | ✓ live |
+| Streak pill                                                            | [app/(tabs)/home/index.tsx](<app/(tabs)/home/index.tsx>)                                                            | `select()`                                     | ✓ live |
+| Close                                                                  | [app/playback/[recordingId].tsx](app/playback/[recordingId].tsx)                                                    | `tap()`                                        | ✓ live |
+| Time slots, weekday toggles                                            | [app/(tabs)/settings/reminders.tsx](<app/(tabs)/settings/reminders.tsx>)                                            | `select()`                                     | ✓ live |
+| `cycleTime`, login link                                                | [app/(onboarding)/reminders.tsx](<app/(onboarding)/reminders.tsx>), [welcome.tsx](<app/(onboarding)/welcome.tsx>)   | `select()` / `tap()`                           | ✓ live |
+| Fine-print links, provider rows                                        | `app/(auth)/login.tsx`, `login-email.tsx`, `finish-account.tsx`, `add-phone.tsx`, `app/(tabs)/settings/profile.tsx` | `tap()`                                        | ✓ live |
 
 **Deliberately skipped:** [src/components/auth/OtpBoxes.tsx](src/components/auth/OtpBoxes.tsx)
 (the row Pressable only focuses a hidden input — the keyboard's own key clicks already give

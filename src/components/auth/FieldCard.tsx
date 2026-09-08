@@ -9,6 +9,7 @@ import {
 
 import { VerifiedCheck } from '@/src/components/ui/VerifiedCheck';
 import { ChevronRight, LockIcon } from '@/src/components/ui/icons';
+import * as haptics from '@/src/lib/haptics';
 import { colors, radii, spacing, typography } from '@/src/theme/theme';
 
 type Accessory = 'none' | 'verified' | 'locked';
@@ -96,9 +97,14 @@ export function FieldCard({
     return <View style={styles.card}>{body}</View>;
   }
 
+  function handlePress() {
+    haptics.select();
+    onPress?.();
+  }
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       {body}

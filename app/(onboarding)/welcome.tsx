@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FlameIcon } from '@/src/components/ui/icons';
 import { Button } from '@/src/components/ui/Button';
+import * as haptics from '@/src/lib/haptics';
 import { colors, radii, shadows, spacing, typography } from '@/src/theme/theme';
 
 export default function Welcome() {
@@ -34,7 +35,13 @@ export default function Welcome() {
           variant="white"
           onPress={() => router.push('/(onboarding)/how-it-works')}
         />
-        <Pressable onPress={() => router.push('/(auth)/login')} style={styles.loginLink}>
+        <Pressable
+          onPress={() => {
+            haptics.tap();
+            router.push('/(auth)/login');
+          }}
+          style={styles.loginLink}
+        >
           <Text style={styles.loginText}>I already have an account</Text>
         </Pressable>
       </View>

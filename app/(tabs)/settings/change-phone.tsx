@@ -12,6 +12,7 @@ import {
   isValidNationalNumber,
   toE164,
 } from '@/src/lib/phone';
+import * as haptics from '@/src/lib/haptics';
 import { isMockPhone } from '@/src/lib/phone-mock';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/providers/AuthProvider';
@@ -47,6 +48,7 @@ export default function ChangePhone() {
     const { error } = await supabase.auth.updateUser({ phone: e164 });
     setSending(false);
     if (error) {
+      haptics.error();
       Alert.alert('Something went wrong', error.message);
       return;
     }
