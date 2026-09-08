@@ -1,4 +1,96 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(awk '/^### 1ma/,/^## /' _design_import/screens-spec.md)",
+      "Bash(awk '/^ *)",
+      "Bash(git ls-tree *)",
+      "WebFetch(domain:docs.expo.dev)",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(echo \"REAL tsc exit: $?\")",
+      "Bash(xargs -0 -I{} sh -c '[ -f \"{}\" ] && [ ! -s \"{}\" ] && echo \"EMPTY: {}\"')",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(curl -s -o /dev/null -w \"8081 status: %{http_code}\\\\n\" --max-time 8 \"http://localhost:8081/status\")",
+      "Bash(curl -s -o /dev/null -w \"8090 web: %{http_code}\\\\n\" --max-time 15 \"http://localhost:8090/\")",
+      "Bash(kill 87759 76494 91462)",
+      "Bash(lsof -nP -iTCP:8081 -iTCP:8090 -sTCP:LISTEN)",
+      "Bash(xcrun simctl *)",
+      "Bash(npx expo *)",
+      "Bash(node -e ' *)",
+      "Bash(npx prettier *)",
+      "Bash(echo \"refs remaining: $?\")",
+      "Bash(node -p \"require\\('./node_modules/expo-router/package.json'\\).version\")",
+      "Bash(grep -o 'Remind at.\\\\{0,2200\\\\}' \"_design_import/Camera Confidence App.dc.html\")",
+      "Bash(sed -n '/^export const radii/,/} as const/p' src/theme/theme.ts)",
+      "Bash(sed -n '/  accent: {/,/  },/p' src/theme/theme.ts)",
+      "Bash(open -a Simulator)",
+      "Bash(echo \"exit: $?\")"
+    ],
+    "deny": [
+      "Bash(git add)",
+      "Bash(git add *)",
+      "Bash(git commit)",
+      "Bash(git commit *)",
+      "Bash(git stash)",
+      "Bash(git stash *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; npx prettier --write --ignore-unknown \"$f\"; } 2>/dev/null || true",
+            "statusMessage": "Formatting with Prettier"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "if": "Bash(npm run ios *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prettier --write . 2>/dev/null || true",
+            "statusMessage": "Formatting before build",
+            "timeout": 120
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "if": "Bash(npm run android *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prettier --write . 2>/dev/null || true",
+            "statusMessage": "Formatting before build",
+            "timeout": 120
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "if": "Bash(npx expo run:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prettier --write . 2>/dev/null || true",
+            "statusMessage": "Formatting before build",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "expo@claude-plugins-official": true
   }

@@ -1,0 +1,11 @@
+node_modules
+.expo
+dist
+build
+ios
+android
+package-lock.json
+
+# Imported Claude Design export — a generated artifact kept verbatim as the
+# design source of truth, not hand-maintained code.
+_design_import

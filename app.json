@@ -1,25 +1,58 @@
 {
   "expo": {
-    "name": "scripai-app-tmp",
-    "slug": "scripai-app-tmp",
+    "name": "ScripAI",
+    "slug": "scripai-app",
+    "scheme": "scripai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.scripai.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ScripAI needs camera access so you can record your daily practice video.",
+        "NSMicrophoneUsageDescription": "ScripAI needs microphone access to record audio with your daily practice video.",
+        "NSPhotoLibraryAddUsageDescription": "ScripAI can save your recordings to your photo library if you choose to."
+      }
     },
     "android": {
+      "package": "com.scripai.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["CAMERA", "RECORD_AUDIO"]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "ScripAI needs camera access so you can record your daily practice video.",
+          "microphonePermission": "ScripAI needs microphone access to record audio with your daily practice video."
+        }
+      ],
+      "expo-video",
+      "expo-audio",
+      "expo-secure-store",
+      "expo-font",
+      "expo-image",
+      "expo-notifications",
+      "@react-native-community/datetimepicker",
+      "expo-localization"
+    ],
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }
